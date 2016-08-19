@@ -34,7 +34,8 @@ def align_contig_to_reference(kmer, contig, reference):
     os.system('bwa index {}'.format(reference))
     
     log('aligning to reference...')
-    os.system('bwa mem -M -t 8 -k 19 {} {}'.format(reference, fastq_filename))
+    #os.system('bwa mem -M -t 8 -k 19 {} {} | bedtools genomecov -ibam - -d | awk \'$4>0\''.format(reference, fastq_filename))
+    os.system('bwa mem -M -t 8 -k 19 {} {} | samtools view -b | bedtools genomecov -ibam stdin -bg'.format(reference, fastq_filename))
 
 def main():
     '''
