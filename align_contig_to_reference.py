@@ -14,7 +14,7 @@ import Bio.SeqRecord
 def log(msg):
     sys.stderr.write('{0}\n'.format(msg))
 
-def align_contig_to_reference(kmer, contig, reference, index):
+def align_contig_to_reference(kmer, contig, reference, index, filter):
     '''
         generate fastq from contig and align to reference
     '''
@@ -38,7 +38,10 @@ def align_contig_to_reference(kmer, contig, reference, index):
     log('aligning to reference...')
     #os.system('bwa mem -M -t 8 -k 19 {} {} | bedtools genomecov -ibam - -d | awk \'$4>0\''.format(reference, fastq_filename))
     bam_filename = 'tmp{}.bam'.format(code)
-    os.system('bwa mem -M -t 8 -k 19 {} {} | samtools view -F 0x100 -q 1 -b | samtools sort - > {}'.format(reference, fastq_filename, bam_filename))
+    if filter:
+        os.system('bwa mem -M -t 8 -k 19 {} {} | samtools view -F 0x100 -q 1 -b | samtools sort - > {}'.format(reference, fastq_filename, bam_filename))
+    else:
+        os.system('bwa mem -M -t 8 -k 19 {} {} | samtools view -b | samtools sort - > {}'.format(reference, fastq_filename, bam_filename))
 
     log('generating coverage...')
     os.system('bedtools genomecov -ibam {} -bg'.format(bam_filename))
@@ -52,8 +55,9 @@ def main():
     parser.add_argument('--contig', required=True, help='contig to align from')
     parser.add_argument('--reference', required=True, help='reference to align to')
     parser.add_argument('--noindex', required=False, default=False, action='store_true', help='reference to align to')
+    parser.add_argument('--filter', required=False, default=False, action='store_true', help='filter on quality')
     args = parser.parse_args()
-    align_contig_to_reference(args.kmer, args.contig, args.reference, not args.noindex)
+    align_contig_to_reference(args.kmer, args.contig, args.reference, not args.noindex, args.filter)
 
 if __name__ == '__main__':
     main()
